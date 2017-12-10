@@ -17,6 +17,11 @@
 #define CGPA_ADD '1'
 #define CGPA_VIEW '2'
 #define CGPA_QUIT '3'
+#define LOGIN_FAILED 0
+#define LOGIN_SCCUESS 1
+#define EXIT 5
+#define LOGOUT 4
+#define INVAILD_CHOICE 6
 
 char Curr_Num[9];
 char Curr_Pass[16];
@@ -98,30 +103,105 @@ void create_student
 void create_assign 
     (ASSIGN *current_as, char name[100], char describe[100], char professor[100], int month, int date);
 void create_cgpa (CGPA *new, int semester, float score);
-int search_year(char year[5]);
-STUDENT*  search_num(char number[5], int year_num);
+int search_year (char year[5]);
+STUDENT*  search_num (char number[5], int year_num);
+int run_account_manage ();
+int  run_menu();
 
 int main(){
     int exit=0;
     int login_flag=0;
+
+    STUDENT *login_st;
 
     initscr();
 
     Create_Struct();
 
     while(!exit){ 
-    
-	/*
-		To do...
-	*/
-    exit = 1;
-	
+        switch(run_account_manage(login_st)){
+            case LOGIN_FAILED :
+                clear();
+                printw("Login Failed!\n\n");
+                continue;
+            case EXIT :
+                login_flag = 0;
+                exit = 1;
+                break;
+            case INVAILD_CHOICE :
+                clear();
+                printw("Please input valid choice.\n\n");
+                continue;
+            case LOGIN_SCCUESS :
+                login_flag = 1;
+                break;
+        }
+
+        clear();
+
+        while(login_flag){
+            switch(run_menu(login_st)){
+                case INVAILD_CHOICE :
+                    clear();
+                    printw("Please input valid choice.\n\n");
+                    continue;
+                case LOGOUT  :
+                    clear();
+                    printw("Successfully loged out!\n\n");
+                    login_flag = 0;
+                    continue;
+            }
+        }
+        
     }
 
     endwin();
     Save_Data();
     system("clear");
   
+    return 0;
+}
+
+int run_account_manage (STUDENT *login_st) {
+    char command = Account_Manage();
+
+    switch(command) {
+        case '1' :
+            return login(login_st);
+        case '2' :
+            New_Account();
+            break;
+        case '3' :
+            //TODO
+            break;
+        case '4' : 
+            //TODO
+            break;
+        case '5' :
+            return EXIT;
+        
+        default : 
+            return INVAILD_CHOICE;
+    }
+
+    return 0;
+}
+
+int run_menu( STUDENT *login_st ) {
+    char command = menu();
+
+    switch(command) {
+        case '1' :
+            break;
+        case '2' :
+            break;
+        case '3' : 
+            break;
+        case '4' :
+            return LOGOUT;
+        default : 
+            return INVAILD_CHOICE;
+    }
     return 0;
 }
 
@@ -356,7 +436,8 @@ char Account_Manage(){
     printw("3. Delete Account\n");
     printw("4. Get Temporary Password\n");
     printw("5. Exit\n");
-
+    
+    noecho();
     return wgetch(stdscr);
 }
 
@@ -367,6 +448,7 @@ char menu(){
     printw("3. Change Password\n");
     printw("4. Logout\n");
     
+    noecho();
     return wgetch(stdscr);
 }
 
@@ -582,51 +664,37 @@ void Change_Password() {
 
 }
 
-int login() {
+int login(STUDENT *login_st) {
     int i,j;
-    int year_flag=0;
-    int num_flag=0;
-    int pass_flag=0;
-    char year[5]={};
-    char num[5]={};
+    char year[5] = {};
+    char number[5] = {};
+    char password[16] = {};
     
-    for(i=0;i<4;i++){
-        year[i]=Curr_Num[i];
+    initscr();
+    printw("Student Number : ");
+    echo();
+    scanw("%4s%4s\n", year, number);
+    printw("Password : ");
+    noecho();
+    scanw("%s",password);
+
+    Login_Year = search_year(year);
+
+    if(Login_Year == TOP->Year_Size){
+        return LOGIN_FAILED;
     }
 
-    for(i=4;i<8;i++){
-        num[i-4]=Curr_Num[i];
+    login_st = search_num(number, Login_Year);
+    
+    if(login_st == NULL){
+        return LOGIN_FAILED;
+    }
+    
+    if(strcmp(login_st->password, password) == 0){
+        return LOGIN_SCCUESS;
     }
 
-    for(i=0;i<TOP->Year_Size;i++){
-        if(!strcmp(TOP->ST_YEAR[i].year,year)){
-            year_flag=1;
-            break;
-        }
-    }
-
-    if(year_flag==1){
-        for(j=0;j<TOP->ST_YEAR[i].Num_Size;j++){
-            if(!strcmp(TOP->ST_YEAR[i].ST_NUM[j].number,num)){
-                num_flag=1;
-                break;
-            }
-        }
-    }
-
-    if(num_flag==1){
-        if(!strcmp(TOP->ST_YEAR[i].ST_NUM[j].password,Curr_Pass)){
-            pass_flag=1;
-            Login_Year=i;//stores logged in user's year
-            Login_Num=j;//stores logged in user's number
-        }
-    }
-
-    if(pass_flag==1){
-        return 1;
-    }
-
-    return 0;
+    return LOGIN_FAILED;
 }
 
 void Temp_Password(){
