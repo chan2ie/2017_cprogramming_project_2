@@ -17,11 +17,16 @@
 #define CGPA_ADD '1'
 #define CGPA_VIEW '2'
 #define CGPA_QUIT '3'
-#define LOGIN_FAILED 0
+#define LOGIN_FAILED 7
 #define LOGIN_SCCUESS 1
 #define EXIT 5
 #define LOGOUT 4
 #define INVAILD_CHOICE 6
+#define NEW_ACCOUNT_FAIL 8
+#define NEW_ACCOUNT_SUCCESS 2
+#define DELETE_ACCOUNT_FAIL_INVALID 9
+#define DELETE_ACCOUNT_FAIL_PASSWORD 10
+#define DELETE_ACCOUNT_SUCCESS 3
 
 char Curr_Num[9];
 char Curr_Pass[16];
@@ -86,8 +91,8 @@ void Search_CGPA ();
 void Print_Assign( int);
 void Print_CGPA ();
 void Print_CGPA_Graph ();
-void New_Account ();
-void Delete_Account ();
+int New_Account ();
+int  Delete_Account ();
 void Change_Password ();
 void rank ();
 void Sort_Assign ();
@@ -107,6 +112,9 @@ int search_year (char year[5]);
 STUDENT*  search_num (char number[5], int year_num);
 int run_account_manage ();
 int  run_menu();
+void free_student();
+void free_assign();
+void free_cgpa();
 
 int main(){
     int exit=0;
@@ -123,6 +131,26 @@ int main(){
             case LOGIN_FAILED :
                 clear();
                 printw("Login Failed!\n\n");
+                continue;
+            case NEW_ACCOUNT_SUCCESS :
+                clear();
+                printw("New account Succesfully made!\n\n");
+                continue;
+            case NEW_ACCOUNT_FAIL :
+                clear();
+                printw("Failed to create new accont. (Existing account)\n\n");
+                continue;
+            case DELETE_ACCOUNT_SUCCESS :
+                clear();
+                printw("Succesfully deleted account!\n\n");
+                continue;
+            case DELETE_ACCOUNT_FAIL_INVALID :
+                clear();
+                printw("Failed to delete account. (NON-existing account)\n\n");
+                continue;
+            case DELETE_ACCOUNT_FAIL_PASSWORD :
+                clear();
+                printw("Failed to delete account. (Wrong password)\n\n");
                 continue;
             case EXIT :
                 login_flag = 0;
@@ -169,11 +197,9 @@ int run_account_manage (STUDENT *login_st) {
         case '1' :
             return login(login_st);
         case '2' :
-            New_Account();
-            break;
+            return New_Account();
         case '3' :
-            //TODO
-            break;
+            return Delete_Account();
         case '4' : 
             //TODO
             break;
@@ -263,7 +289,7 @@ STUDENT* search_num (char number[5], int year_num) {
     STUDENT *sptr;
     sptr = TOP->ST_YEAR[year_num].ST_NUM;
 
-    for(int i = 0; i < TOP->ST_YEAR[year_num].Num_Size; i++){
+    for(int i = 0; i < TOP->ST_YEAR[year_num].Num_Size+1; i++){
         if(strcmp(sptr->number, number) == 0){
             break;
         }
@@ -285,7 +311,6 @@ void Create_Struct(){
 
     fclose(fpoint);
 
-    //TODO
 }
 
 void read_data (FILE * fpoint) {
@@ -642,18 +667,93 @@ void Delete_Assign() {
   */
 }
 
-void New_Account() {
-	/*
-		To do...
-	*/
+int New_Account() {
+    char year[5], number[5], password[16];
+    
+    clear();
+    printw("Student Number : ");
+    echo();
+    scanw("%4s%4s\n", year, number);
+    printw("Password : ");
+    noecho();
+    scanw("%s",password);
+        
+    if(search_year(year) != TOP->Year_Size){
+        if(search_num(number, search_year(year)) != NULL){
+            return NEW_ACCOUNT_FAIL;
+        }
+    }
 
+    create_student(year, number, password, 0, 0);
+    return NEW_ACCOUNT_SUCCESS;
 }
 
-void Delete_Account() {
-    /*
-		To do...
-    */
+int Delete_Account() {
+    int account_year;
+    STUDENT *account;
 
+    char year[5], number[5], password[16];
+    
+    clear();
+    printw("Student Number : ");
+    echo();
+    scanw("%4s%4s\n", year, number);
+    printw("Password : ");
+    noecho();
+    scanw("%s",password);
+
+    account_year = search_year(year);
+    account = search_num(number, account_year);
+
+    if(account == NULL){
+        return DELETE_ACCOUNT_FAIL_INVALID;
+    }
+    
+    if(strcmp(account->password, password) != 0){
+        return DELETE_ACCOUNT_FAIL_PASSWORD;
+    }
+
+    STUDENT *sptr = TOP->ST_YEAR[account_year].ST_NUM;
+
+    for(int i = 0; i < TOP->ST_YEAR[account_year].Num_Size; i++){
+        if( sptr->link == account ){
+            break;
+        }
+        sptr = sptr->link;
+    }
+    
+    sptr->link = account->link;
+    free_student(account);
+    
+    TOP->ST_YEAR[account_year].Num_Size--;
+
+    return DELETE_ACCOUNT_SUCCESS;
+}
+
+void free_student (STUDENT *account) {
+    ASSIGN *head_as = account->Child_A;
+    CGPA *head_cg = account->Child_C;
+
+    free_assign(head_as);
+    free_cgpa(head_cg);
+}
+
+void free_assign (ASSIGN *aptr){
+
+    if(aptr->link != NULL){
+        free_assign(aptr->link);
+    }
+
+    free(aptr);
+}
+
+void free_cgpa (CGPA *cptr){
+
+    if(cptr->link != NULL){
+        free_cgpa(cptr->link);
+    }
+
+    free(cptr);
 }
 
 void Change_Password() {
@@ -670,7 +770,7 @@ int login(STUDENT *login_st) {
     char number[5] = {};
     char password[16] = {};
     
-    initscr();
+    clear();
     printw("Student Number : ");
     echo();
     scanw("%4s%4s\n", year, number);
