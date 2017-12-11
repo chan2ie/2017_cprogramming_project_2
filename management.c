@@ -22,11 +22,14 @@
 #define EXIT 5
 #define LOGOUT 4
 #define INVAILD_CHOICE 6
-#define NEW_ACCOUNT_FAIL 8
+#define NEW_ACCOUNT_FAIL 21
 #define NEW_ACCOUNT_SUCCESS 2
-#define DELETE_ACCOUNT_FAIL_INVALID 9
-#define DELETE_ACCOUNT_FAIL_PASSWORD 10
+#define DELETE_ACCOUNT_FAIL_INVALID 31
+#define DELETE_ACCOUNT_FAIL_PASSWORD 32
 #define DELETE_ACCOUNT_SUCCESS 3
+#define MAIN_MENU 23
+#define CHANGE_PASSWORD_SUCCESS 131
+#define CHANGE_PASSWORD_FAIL 132
 
 char Curr_Num[9];
 char Curr_Pass[16];
@@ -83,38 +86,33 @@ void Save_Data ();
 char menu ();
 char cgpa_menu ();
 void Add_GPA ();
-void Del_GPA ();
-void Cor_GPA (char semester,float gpa);
+void Cor_GPA (STUDENT *login_st, char semester,float gpa);
 void Create_Struct ();
-void Search_Assign ();
-void Search_CGPA ();
 void Print_Assign( int);
 void Print_CGPA ();
 void Print_CGPA_Graph ();
 int New_Account ();
-int  Delete_Account ();
-void Change_Password ();
+int Delete_Account ();
+int Change_Password ();
 void rank ();
 void Sort_Assign ();
 void Add_Assign ();
 void Delete_Assign ();
-void Temp_Password ();
 int login ();
 void Temp_Password ();
 char Account_Manage ();
 void read_data (FILE * fpoint);
-void create_student 
-    (char year[5], char number[5], char password[16], int a_size, int c_size);
-void create_assign 
-    (ASSIGN *current_as, char name[100], char describe[100], char professor[100], int month, int date);
+void create_student ();
+void create_assign (); 
 void create_cgpa (CGPA *new, int semester, float score);
-int search_year (char year[5]);
-STUDENT*  search_num (char number[5], int year_num);
+int search_year ();
+STUDENT*  search_num ();
 int run_account_manage ();
-int  run_menu();
-void free_student();
-void free_assign();
-void free_cgpa();
+int run_menu ();
+int run_cgpa_menu ();
+void free_student ();
+void free_assign ();
+void free_cgpa ();
 
 int main(){
     int exit=0;
@@ -165,8 +163,13 @@ int main(){
                 break;
         }
 
-        clear();
+        if(login_flag == 1){
+            char number[5] = {Curr_Num[4], Curr_Num[5], Curr_Num[6], Curr_Num[7], '\0'};
+            login_st = search_num(number, Login_Year);
+        }
 
+        clear();
+       
         while(login_flag){
             switch(run_menu(login_st)){
                 case INVAILD_CHOICE :
@@ -178,9 +181,18 @@ int main(){
                     printw("Successfully loged out!\n\n");
                     login_flag = 0;
                     continue;
+                case CHANGE_PASSWORD_FAIL :
+                    clear();
+                    printw("Failed to change password. (Incorrect confirm password)\n\n");
+                    continue;
+                case CHANGE_PASSWORD_SUCCESS :
+                    clear();
+                    printw("Successfully changed password!\n\n");
+                    continue;
             }
+            clear();
         }
-        
+        clear();
     }
 
     endwin();
@@ -190,20 +202,20 @@ int main(){
     return 0;
 }
 
-int run_account_manage (STUDENT *login_st) {
+int run_account_manage () {
     char command = Account_Manage();
 
     switch(command) {
-        case '1' :
-            return login(login_st);
-        case '2' :
+        case MENU_LOGIN :
+            return login();
+        case MENU_NEW :
             return New_Account();
-        case '3' :
+        case MENU_DEL :
             return Delete_Account();
-        case '4' : 
+        case MENU_TEMP : 
             //TODO
             break;
-        case '5' :
+        case MENU_QUIT :
             return EXIT;
         
         default : 
@@ -215,17 +227,50 @@ int run_account_manage (STUDENT *login_st) {
 
 int run_menu( STUDENT *login_st ) {
     char command = menu();
+    int flag = 1;
 
     switch(command) {
-        case '1' :
+        case MENU_ASSIGN :
             break;
-        case '2' :
-            break;
-        case '3' : 
-            break;
-        case '4' :
+        case MENU_CGPA :
+            clear();
+            while(flag){
+                switch(run_cgpa_menu(login_st)){
+                    case MAIN_MENU :
+                        flag = 0;
+                        clear();
+                        continue;
+                    case INVAILD_CHOICE :
+                        clear();
+                        printw("Please input valid choice.\n\n");
+                        continue;
+                }
+                clear();
+            }
+            return MAIN_MENU;
+        case MENU_CHANGE : 
+            return Change_Password(login_st);
+        case MENU_LOGOUT :
             return LOGOUT;
         default : 
+            return INVAILD_CHOICE;
+    }
+    return 0;
+}
+
+int run_cgpa_menu ( STUDENT *login_st ) {
+    char command = cgpa_menu();
+
+    switch(command) {
+        case CGPA_ADD :
+            Add_GPA(login_st);
+            break;
+        case CGPA_VIEW :
+            Print_CGPA(login_st);
+            break;
+        case CGPA_QUIT :
+            return MAIN_MENU;
+        default :
             return INVAILD_CHOICE;
     }
     return 0;
@@ -529,39 +574,22 @@ char cgpa_menu() {
     printw("2. View all\n");
     printw("3. Exit\n");
     
+    noecho();
+
     return wgetch(stdscr);
 }
 
-void Search_CGPA () {
-    int exit;
-    Curr_year_index=Login_Year;
-    Curr_num_index=Login_Num;
-    while(!exit){
-
-        clear();
-
-        switch(cgpa_menu()){
-            case CGPA_ADD: Add_GPA(); break;
-            case CGPA_VIEW: Print_CGPA(); break;
-            case CGPA_QUIT: exit = 1; break;
-
-	        default: break;
-        }
-    }
-
-    exit = 0;
-}
-
-void Add_GPA () {
+void Add_GPA (STUDENT *login_st) {
     char semester;
     float gpa;
     int gpa_size;
+
     clear();
     echo();
     printw("Input the semester of GPA : ");
     scanw("%c", &semester);
 
-    gpa_size = TOP -> ST_YEAR[Curr_year_index].ST_NUM[Curr_num_index].CGPA_Size;  
+    gpa_size = login_st->CGPA_Size; 
 
     if(semester - '0' > (gpa_size + 1) || semester - '0' < 1) {
         printw("You entered wrong number!\n");
@@ -581,58 +609,75 @@ void Add_GPA () {
     }
 
     if(semester - '0' <= gpa_size) {
-        Cor_GPA(semester, gpa);
+        Cor_GPA(login_st, semester, gpa);
         
         return ;
     }
 
-    TOP -> ST_YEAR[Curr_year_index].ST_NUM[Curr_num_index].CGPA_Size++;
+    login_st->CGPA_Size++;
     gpa_size++;
-    
-    TOP -> ST_YEAR[Curr_year_index].ST_NUM[Curr_num_index].Child_C
-        = (CGPA*)realloc(TOP -> ST_YEAR[Curr_year_index].ST_NUM[Curr_num_index].Child_C,gpa_size * sizeof(CGPA));
 
-    TOP -> ST_YEAR[Curr_year_index].ST_NUM[Curr_num_index].Child_C[gpa_size - 1].semester = semester - '0';
-    TOP -> ST_YEAR[Curr_year_index].ST_NUM[Curr_num_index].Child_C[gpa_size - 1].score = gpa; 
+    CGPA *cptr = login_st->Child_C;
+
+
+    for(int i = 0; i < gpa_size - 1; i++){
+        cptr = cptr->link;
+    }
+
+    CGPA *new = malloc(sizeof(CGPA));
+    cptr->link = new;
+
+    new->semester = semester - '0';
+    new->score = gpa; 
+    
+    printw("GPA has added successfully!\n");
+    getch();
 
     return ;
 
 }
 
-void Cor_GPA(char semester, float gpa) {
-    int i;
+void Cor_GPA(STUDENT *login_st, char semester, float gpa) {
+    CGPA *cptr = login_st->Child_C;
     
-    TOP -> ST_YEAR[Curr_year_index].ST_NUM[Curr_num_index].Child_C[semester - '0' - 1].score = gpa;
-  
-    printw("GPA is changed successfully!\n");
+    for(int i = 0; i < semester - '0'; i++){
+        cptr = cptr->link;
+    }
+
+    cptr->score = gpa;
+
+    printw("GPA has changed successfully!\n");
     getch();
     
     return ;
 
 }
 
-void Print_CGPA() {
-    int i;
-    int tmpSemester;
-    float tmpGPA;
+void Print_CGPA(STUDENT *login_st) {
     float sum = 0;
+
+    printw("%s\n", login_st->number);
+
+    CGPA *cptr = login_st->Child_C;
     
     clear();
+
     printw("<CGPA Management for %s>\n", Curr_Num);
     printw("------------------------------\n");
     printw("  Semester  |  GPA  |  CGPA  |  \n");
-    for(i = 0 ; i < TOP -> ST_YEAR[Curr_year_index].ST_NUM[Curr_num_index].CGPA_Size ; i++) {
-    /*
-		To do...
-    */
+
+    for(int i = 0 ; i < login_st->CGPA_Size ; i++) {
+        cptr = cptr->link;
+        sum += cptr->score;
+
         printw("------------------------------\n");
-        printw("     %d      |  %.2f |  %.2f  |\n", tmpSemester, tmpGPA, sum/(i + 1));
+        printw("     %d      |  %.2f |  %.2f  |\n", cptr->semester, cptr->score, sum/(i + 1));
     }
     
     printw("------------------------------\n\n");
-    printw("<CGPA Management by Graph for %s>\n", Curr_Num);
-    printw("(x-axis : semester,  y-axis : score)\n");
-    Print_CGPA_Graph();
+//    printw("<CGPA Management by Graph for %s>\n", Curr_Num);
+//    printw("(x-axis : semester,  y-axis : score)\n");
+//    Print_CGPA_Graph();
     
     getch();
 }
@@ -756,16 +801,31 @@ void free_cgpa (CGPA *cptr){
     free(cptr);
 }
 
-void Change_Password() {
+int Change_Password(STUDENT *login_st) {
+    char password[16], confirm_password[16];
 
-	/*
-		To do...
-	*/
+    clear();
+
+    printw("Enter new password : ");
+    noecho();
+    scanw("%s",password);
+    printw("Confirm new password : ");
+    noecho();
+    scanw("%s",confirm_password);
+
+    if(strcmp(password, confirm_password) == 0){
+        strcpy(login_st->password, password);
+        
+        return CHANGE_PASSWORD_SUCCESS;
+    }
+    else{
+        return CHANGE_PASSWORD_FAIL;
+    }
 
 }
 
-int login(STUDENT *login_st) {
-    int i,j;
+int login() {
+    STUDENT *login_st;
     char year[5] = {};
     char number[5] = {};
     char password[16] = {};
@@ -791,6 +851,8 @@ int login(STUDENT *login_st) {
     }
     
     if(strcmp(login_st->password, password) == 0){
+        strcpy(Curr_Num, year);
+        strcat(Curr_Num, number);
         return LOGIN_SCCUESS;
     }
 
