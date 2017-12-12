@@ -213,7 +213,7 @@ int run_account_manage () {
         case MENU_DEL :
             return Delete_Account();
         case MENU_TEMP : 
-            //TODO
+            Temp_Password();
             break;
         case MENU_QUIT :
             return EXIT;
@@ -860,18 +860,53 @@ int login() {
 }
 
 void Temp_Password(){
-    int flag1=0;
-    int i, j, k;
-    char num[5]={};
+    char year[5], number[5];
     char temppassword[8];
     float temp;
+    int current_yr;
+    STUDENT *current_st;
 
     clear();
     echo();
     srand(time(NULL));
-    printw("Student Number:");
-    scanw("%s",Curr_Num);
-	/*
-		To do...
-	*/
+
+    printw("Student Number : ");
+    scanw("%4s%4s",year, number);
+        
+    current_yr = search_year(year);
+    current_st = search_num(number, current_yr);
+
+    if(current_st == NULL){
+        printw("Failed to get temporary password. (Wrong student number)\n",current_st->password);
+        getch();
+
+        return ;
+    }
+
+    printw("Input latest semester's GPA : ");
+    scanw("%f", &temp);
+
+    CGPA *cptr = current_st->Child_C;
+
+    for(int i = 0; i < current_st->CGPA_Size; i++){
+        cptr = cptr->link;
+    }
+
+    if(cptr->score != temp){
+        printw("Failed to get temporary password. (Wrong GPA)\n",current_st->password);
+        getch();
+
+        return ;
+    }
+
+    for(int i = 0; i < 8; i++){
+        temppassword[i] = (rand()%93 + 33);
+    }
+
+    strcpy(current_st->password,temppassword);
+
+    printw("Temporary Password is <%s>\n",current_st->password);
+    getch();
+
+    return ;
 }
