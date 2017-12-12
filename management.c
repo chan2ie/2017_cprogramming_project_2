@@ -88,7 +88,7 @@ char cgpa_menu ();
 void Add_GPA ();
 void Cor_GPA (STUDENT *login_st, char semester,float gpa);
 void Create_Struct ();
-void Print_Assign( int);
+void Print_Assign ();
 void Print_CGPA ();
 void Print_CGPA_Graph ();
 int New_Account ();
@@ -110,6 +110,7 @@ STUDENT*  search_num ();
 int run_account_manage ();
 int run_menu ();
 int run_cgpa_menu ();
+int run_assign_menu ();
 void free_student ();
 void free_assign ();
 void free_cgpa ();
@@ -231,9 +232,31 @@ int run_menu( STUDENT *login_st ) {
 
     switch(command) {
         case MENU_ASSIGN :
-            break;
-        case MENU_CGPA :
+
             clear();
+            flag = 1;
+
+            while(flag){
+                switch(run_assign_menu(login_st)){
+                    case MAIN_MENU :
+                        flag = 0;
+                        clear();
+                        continue;
+                    case INVAILD_CHOICE :
+                        clear();
+                        printw("Please input valid choice.\n\n");
+                        continue;
+                }
+                clear();
+            }
+            
+            return MAIN_MENU;
+
+        case MENU_CGPA :
+
+            clear();
+            flag = 1;
+
             while(flag){
                 switch(run_cgpa_menu(login_st)){
                     case MAIN_MENU :
@@ -247,7 +270,9 @@ int run_menu( STUDENT *login_st ) {
                 }
                 clear();
             }
+
             return MAIN_MENU;
+
         case MENU_CHANGE : 
             return Change_Password(login_st);
         case MENU_LOGOUT :
@@ -299,9 +324,9 @@ void Save_Data(){
             for(int k = 0; k < current_st->Assign_Size; k++){
                 current_as = current_as->link;
 
-                fprintf(fpoint, "%s", current_as->name);
-                fprintf(fpoint, "%s", current_as->describe);
-                fprintf(fpoint, "%s", current_as->professor);
+                fprintf(fpoint, "%s\n", current_as->name);
+                fprintf(fpoint, "%s\n", current_as->describe);
+                fprintf(fpoint, "%s\n", current_as->professor);
                 fprintf(fpoint, "%d %d\n", current_as->date[0], current_as->date[1]);
             }
 
@@ -392,6 +417,10 @@ void read_data (FILE * fpoint) {
                 fgets(describe, 100, fpoint);
                 fgets(professor, 100, fpoint);
                 fscanf(fpoint, "%d %d\n", &month, &date);
+
+                name[strlen(name) - 1] = '\0';
+                describe[strlen(describe) - 1] = '\0';
+                professor[strlen(professor) - 1] = '\0';
 
                 create_assign(new, name, describe, professor, month, date);
                 current_as = current_as->link;
@@ -522,50 +551,61 @@ char menu(){
     return wgetch(stdscr);
 }
 
-void Search_Assign(){
-    int Asize;
-    char input;
+int run_assign_menu (STUDENT *login_st){
+    char command;
 
-    clear();
+    printw("<Assignment Management for %s>\n\n",Curr_Num);
 
-    printw("<Assignment Management for %s>\n",Curr_Num);
+//    Sort_Assign();
+    Print_Assign(login_st);
 
-    Asize = TOP->ST_YEAR[Login_Year].ST_NUM[Login_Num].Assign_Size;
-
-    Sort_Assign();
-    Print_Assign(Asize);
-
-    printw("1. New Assignment\n2. Delete Assignment\n3. Return to main menu\n");
+    printw("1. New Assignment\n");
+    printw("2. Delete Assignment\n");
+    printw("3. Return to main menu\n");
 
     noecho();
-    input=wgetch(stdscr);
+    command = wgetch(stdscr);
 
-    switch(input){
-        case '1': Add_Assign(); break;
-        case '2': Delete_Assign(); break;
-        case '3': return; break;
+    switch(command){
+        case '1': 
+            clear();
+            Add_Assign(login_st);
+            break;
+        case '2': 
+            Delete_Assign(); 
+            break;
+        case '3': 
+            return MAIN_MENU;
+
+        default :
+            return INVAILD_CHOICE;
     }
 
     clear();
 }
 
-void Print_Assign(int Asize){
+void Print_Assign(STUDENT *login_st){
     int k,D_day,thistime,thattime;
     time_t t;
     struct tm *today;
-    int i;
-    int j;
 
-    i=Login_Year;
-    j=Login_Num;
+    ASSIGN *aptr = login_st->Child_A;
+
     t = time(NULL);
     today = localtime(&t);
     thistime = mktime(today);
-  /*
-  	To do...
-  */
+
+    for(int i = 0; i < login_st->Assign_Size; i++){
+        aptr = aptr->link;
+        
+        printw("<%d> Name\t\t : %s\n", i + 1, aptr->name);
+        printw("    Describe\t\t : %s\n", aptr->describe);
+        printw("    Professor\t\t : %s\n", aptr->professor);
+        printw("    Due : %d/%d\n", aptr->date[0], aptr->date[1]);
+        printw("    D-day\t\t : later,,,,\n\n");
+    }
   
-  
+    //TODO 
 }
 
 char cgpa_menu() {
@@ -697,12 +737,39 @@ void Sort_Assign () {
   */
 }
 
-void Add_Assign() {
-  //Login_Num,Login_Year
-  /*
-  	To do...
-  
-  */
+void Add_Assign(STUDENT *login_st) {
+    char name[100], describe[100], professor[100];
+    int month, date;
+
+    echo();
+    printw("Enter the name of new assignment :\n");
+    
+    printw("");
+    getstr(name);
+    printw("Enter the description of new assignment :\n");
+    getstr(describe);
+    printw("Enter the professor of new assignment :\n");
+    getstr(professor);
+    printw("Enter the due month of new assignment : ");
+    scanw("%d\n", &month);
+    printw("Enter the due date of new assignment : ");
+    scanw("%d\n", &date);
+
+    ASSIGN *aptr = login_st->Child_A;
+
+    for(int i = 0; i < login_st->Assign_Size; i++){
+        aptr = aptr->link;
+    }
+
+    ASSIGN *new = malloc(sizeof(ASSIGN));
+    aptr->link = new;
+    
+    create_assign(new, name, describe, professor, month, date);
+
+    login_st->Assign_Size++;
+
+    printw("\nNew Assignment is successfully added!\n");
+    getch();
   }
 
 void Delete_Assign() {
