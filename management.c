@@ -572,7 +572,8 @@ int run_assign_menu (STUDENT *login_st){
             Add_Assign(login_st);
             break;
         case '2': 
-            Delete_Assign(); 
+            clear();
+            Delete_Assign(login_st); 
             break;
         case '3': 
             return MAIN_MENU;
@@ -770,13 +771,36 @@ void Add_Assign(STUDENT *login_st) {
 
     printw("\nNew Assignment is successfully added!\n");
     getch();
-  }
+}
 
-void Delete_Assign() {
-  /*
-  	To do...
-   
-  */
+void Delete_Assign(STUDENT *login_st) {
+    char name[100];
+
+    echo();
+    printw("Input the name of assignment you want to delete :\n");
+    getstr(name);
+
+    ASSIGN *aptr = login_st->Child_A->link;
+    ASSIGN *before = login_st->Child_A;
+
+    for(int i = 0; i < login_st->Assign_Size; i++){
+        if(strcmp(aptr->name, name) == 0){
+            break;
+        }
+        aptr = aptr->link;
+        before = before->link;
+    }
+
+    if(aptr == NULL){
+        printw("\nYou don't have assignment named '%s'!\n", name);
+        getch();
+        return ;
+    }
+    
+    before->link = aptr->link;
+    free(aptr);
+
+    login_st->Assign_Size--;
 }
 
 int New_Account() {
