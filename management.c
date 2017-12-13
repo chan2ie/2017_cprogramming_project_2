@@ -10,7 +10,7 @@ int main(){
 
     Create_Struct();
 
-    while(!exit){ 
+    while(!exit){
         switch(run_account_manage(login_st)){
             case LOGIN_FAILED :
                 clear();
@@ -55,7 +55,7 @@ int main(){
         }
 
         clear();
-       
+
         while(login_flag){
             switch(run_menu(login_st)){
                 case INVAILD_CHOICE :
@@ -84,7 +84,7 @@ int main(){
     endwin();
     Save_Data();
     system("clear");
-  
+
     return 0;
 }
 
@@ -98,13 +98,13 @@ int run_account_manage () {
             return New_Account();
         case MENU_DEL :
             return Delete_Account();
-        case MENU_TEMP : 
+        case MENU_TEMP :
             Temp_Password();
             break;
         case MENU_QUIT :
             return EXIT;
-        
-        default : 
+
+        default :
             return INVAILD_CHOICE;
     }
 
@@ -134,7 +134,7 @@ int run_menu( STUDENT *login_st ) {
                 }
                 clear();
             }
-            
+
             return MAIN_MENU;
 
         case MENU_CGPA :
@@ -158,11 +158,11 @@ int run_menu( STUDENT *login_st ) {
 
             return MAIN_MENU;
 
-        case MENU_CHANGE : 
+        case MENU_CHANGE :
             return Change_Password(login_st);
         case MENU_LOGOUT :
             return LOGOUT;
-        default : 
+        default :
             return INVAILD_CHOICE;
     }
     return 0;
@@ -190,20 +190,20 @@ void Save_Data(){
     FILE* fpoint;
 
     fpoint = fopen("data.txt", "w");
-   
+
     for(int i = 0; i < TOP->Year_Size; i++){
         STUDENT *current_st = TOP->ST_YEAR[i].ST_NUM;
-        
+
         for(int j = 0; j< TOP->ST_YEAR[i].Num_Size; j++){
             current_st = current_st->link;
 
-            fprintf(fpoint, "%s%s / %s / %d / %d\n", 
-                    TOP->ST_YEAR[i].year, 
-                    current_st->number, 
-                    current_st->password, 
-                    current_st->Assign_Size, 
+            fprintf(fpoint, "%s%s / %s / %d / %d\n",
+                    TOP->ST_YEAR[i].year,
+                    current_st->number,
+                    current_st->password,
+                    current_st->Assign_Size,
                     current_st->CGPA_Size);
-            
+
             ASSIGN *current_as = current_st->Child_A;
 
             for(int k = 0; k < current_st->Assign_Size; k++){
@@ -233,10 +233,10 @@ int search_year (char year[]) {
 
     for(year_num = 0; year_num < TOP->Year_Size; year_num++){
         if(strcmp(TOP->ST_YEAR[year_num].year, year) == 0){
-            break; 
+            break;
         }
     }
-    
+
     return year_num;
 }
 
@@ -255,7 +255,7 @@ STUDENT* search_num (char number[], int year_num) {
 
 void Create_Struct(){
     FILE* fpoint;
-    
+
     fpoint = fopen("data.txt","r");
 
     TOP = malloc(sizeof(TREE_HEAD));
@@ -274,7 +274,7 @@ void read_data (FILE * fpoint) {
     char password[16], year[5], number[5], name[100], describe[100], professor[100];
 
     while(1){
-        if( fscanf(fpoint, "%4s%4s / %s / %d / %d\n", 
+        if( fscanf(fpoint, "%4s%4s / %s / %d / %d\n",
             year, number, password, &a_size, &c_size) != 5 ){
             break;
         }
@@ -287,7 +287,7 @@ void read_data (FILE * fpoint) {
 
         if(a_size != 0){
                 ASSIGN *current_as = current_st->Child_A;
-                
+
             for(int i = 0; i < a_size; i++){
                 ASSIGN *new = malloc(sizeof(ASSIGN));
                 current_as->link = new;
@@ -303,10 +303,10 @@ void read_data (FILE * fpoint) {
 
                 create_assign(new, name, describe, professor, month, date);
                 current_as = current_as->link;
-                
+
             }
         }
-        
+
         if(c_size != 0){
             CGPA *current_cg = current_st->Child_C;
 
@@ -321,14 +321,14 @@ void read_data (FILE * fpoint) {
                 current_cg = current_cg->link;
             }
         }
-        
+
     }
 }
 
 void create_student (char year[5], char number[5], char password[16], int a_size, int c_size) {
     int year_num;
     STUDENT *new = malloc(sizeof(STUDENT));
-    
+
     if(TOP->Year_Size == 0){
         YEAR *year_head = malloc(sizeof(YEAR));
         TOP->ST_YEAR = year_head;
@@ -336,11 +336,11 @@ void create_student (char year[5], char number[5], char password[16], int a_size
         TOP->Year_Size = 1;
 
         strcpy(TOP->ST_YEAR[0].year,year);
-        
+
         STUDENT *head = malloc(sizeof(STUDENT));
         head->link = new;
         TOP->ST_YEAR[0].ST_NUM = head;
-        
+
         TOP->ST_YEAR[0].Num_Size = 1;
 
         strcpy(new->number, number);
@@ -354,21 +354,21 @@ void create_student (char year[5], char number[5], char password[16], int a_size
         if(year_num == TOP->Year_Size){
             TOP->Year_Size++;
             TOP->ST_YEAR = realloc(TOP->ST_YEAR, TOP->Year_Size * sizeof(YEAR));
-                
+
             strcpy(TOP->ST_YEAR[year_num].year,year);
-        
+
             STUDENT *head = malloc(sizeof(STUDENT));
             TOP->ST_YEAR[year_num].ST_NUM = head;
-    
+
             TOP->ST_YEAR[year_num].ST_NUM->link = new;
-        
+
             TOP->ST_YEAR[year_num].Num_Size = 1;
 
             strcpy(new->number, number);
             strcpy(new->password, password);
             new->Assign_Size = a_size;
             new->CGPA_Size = c_size;
-            
+
         }
         else{
             STUDENT *sptr = TOP->ST_YEAR[year_num].ST_NUM;
@@ -378,14 +378,14 @@ void create_student (char year[5], char number[5], char password[16], int a_size
             }
 
             sptr->link = new;
-        
+
             TOP->ST_YEAR[year_num].Num_Size++;
 
             strcpy(new->number, number);
             strcpy(new->password, password);
             new->Assign_Size = a_size;
             new->CGPA_Size = c_size;
-        }    
+        }
     }
     ASSIGN *head_as = malloc(sizeof(ASSIGN));
     new->Child_A = head_as;
@@ -399,7 +399,7 @@ void create_student (char year[5], char number[5], char password[16], int a_size
     //DONE (for now : 1208)
 }
 
-void create_assign 
+void create_assign
 (ASSIGN *new, char name[100], char describe[100], char professor[100], int month, int date) {
     strcpy(new->name, name);
     strcpy(new->describe, describe);
@@ -424,7 +424,7 @@ char Account_Manage(){
     printw("3. Delete Account\n");
     printw("4. Get Temporary Password\n");
     printw("5. Exit\n");
-    
+
     noecho();
     return wgetch(stdscr);
 }
@@ -435,7 +435,7 @@ char menu(){
     printw("2. CGPA Management\n");
     printw("3. Change Password\n");
     printw("4. Logout\n");
-    
+
     noecho();
     return wgetch(stdscr);
 }
@@ -456,15 +456,15 @@ int run_assign_menu (STUDENT *login_st){
     command = wgetch(stdscr);
 
     switch(command){
-        case '1': 
+        case '1':
             clear();
             Add_Assign(login_st);
             break;
-        case '2': 
+        case '2':
             clear();
-            Delete_Assign(login_st); 
+            Delete_Assign(login_st);
             break;
-        case '3': 
+        case '3':
             return MAIN_MENU;
 
         default :
@@ -486,12 +486,12 @@ void Print_Assign(STUDENT *login_st){
 
     for(int i = 0; i < login_st->Assign_Size; i++){
         aptr = aptr->link;
-        
+
         printw("<%d> Name\t\t : %s\n", i + 1, aptr->name);
         printw("    Describe\t\t : %s\n", aptr->describe);
         printw("    Professor\t\t : %s\n", aptr->professor);
         printw("    Due : %d/%d\n", aptr->date[0], aptr->date[1]);
-    
+
         d_day.tm_year = today->tm_year;
         d_day.tm_mon = aptr->date[0] - 1;
         d_day.tm_mday = aptr->date[1];
@@ -515,8 +515,8 @@ void Print_Assign(STUDENT *login_st){
         }
 
     }
-  
-    //TODO 
+
+    //TODO
 }
 
 char cgpa_menu() {
@@ -524,7 +524,7 @@ char cgpa_menu() {
     printw("1. Add new GPA or Change existing GPA\n");
     printw("2. View all\n");
     printw("3. Exit\n");
-    
+
     noecho();
 
     return wgetch(stdscr);
@@ -540,14 +540,14 @@ void Add_GPA (STUDENT *login_st) {
     printw("Input the semester of GPA : ");
     scanw("%c", &semester);
 
-    gpa_size = login_st->CGPA_Size; 
+    gpa_size = login_st->CGPA_Size;
 
     if(semester - '0' > (gpa_size + 1) || semester - '0' < 1) {
         printw("You entered wrong number!\n");
         getch();
 
         return ;
-    } 
+    }
 
     printw("Input the GPA : ");
     scanw("%f", &gpa);
@@ -561,7 +561,7 @@ void Add_GPA (STUDENT *login_st) {
 
     if(semester - '0' <= gpa_size) {
         Cor_GPA(login_st, semester, gpa);
-        
+
         return ;
     }
 
@@ -579,8 +579,8 @@ void Add_GPA (STUDENT *login_st) {
     cptr->link = new;
 
     new->semester = semester - '0';
-    new->score = gpa; 
-    
+    new->score = gpa;
+
     printw("GPA has added successfully!\n");
     getch();
 
@@ -590,7 +590,7 @@ void Add_GPA (STUDENT *login_st) {
 
 void Cor_GPA(STUDENT *login_st, char semester, float gpa) {
     CGPA *cptr = login_st->Child_C;
-    
+
     for(int i = 0; i < semester - '0'; i++){
         cptr = cptr->link;
     }
@@ -599,7 +599,7 @@ void Cor_GPA(STUDENT *login_st, char semester, float gpa) {
 
     printw("GPA has changed successfully!\n");
     getch();
-    
+
     return ;
 
 }
@@ -610,7 +610,7 @@ void Print_CGPA(STUDENT *login_st) {
     printw("%s\n", login_st->number);
 
     CGPA *cptr = login_st->Child_C;
-    
+
     clear();
 
     printw("<CGPA Management for %s>\n", Curr_Num);
@@ -624,9 +624,9 @@ void Print_CGPA(STUDENT *login_st) {
         printw("------------------------------\n");
         printw("     %d      |  %.2f |  %.2f  |\n", cptr->semester, cptr->score, sum/(i + 1));
     }
-    
+
     printw("------------------------------\n\n");
-    
+
     getch();
 }
 
@@ -642,7 +642,7 @@ void Sort_Assign (STUDENT *login_st) {
             check = check->link;
             check_bf = check_bf->link;
         }
-        
+
         for(int j = 0; j < i; j++){
             bef = login_st->Child_A->link;
 
@@ -661,9 +661,9 @@ void Sort_Assign (STUDENT *login_st) {
 
             if(j == (i - 1)) ;
             else{
-                if(100*check->date[0] + check->date[1] 
+                if(100*check->date[0] + check->date[1]
                     >= 100*bef->date[0] + bef->date[1]
-                    && 100*check->date[0] + check->date[1] 
+                    && 100*check->date[0] + check->date[1]
                     < 100*bef->link->date[0] + bef->link->date[1]){
                     af = bef->link;
                     bef->link = check;
@@ -673,7 +673,7 @@ void Sort_Assign (STUDENT *login_st) {
             }
         }
     }
-  
+
 }
 
 void Add_Assign(STUDENT *login_st) {
@@ -682,7 +682,7 @@ void Add_Assign(STUDENT *login_st) {
 
     echo();
     printw("Enter the name of new assignment :\n");
-    
+
     printw("");
     getstr(name);
     printw("Enter the description of new assignment :\n");
@@ -702,7 +702,7 @@ void Add_Assign(STUDENT *login_st) {
 
     ASSIGN *new = malloc(sizeof(ASSIGN));
     aptr->link = new;
-    
+
     create_assign(new, name, describe, professor, month, date);
 
     login_st->Assign_Size++;
@@ -733,7 +733,7 @@ void Delete_Assign(STUDENT *login_st) {
         printw("\nYou don't have assignment named '%s'!\n", name);
         getch();
         return ;
-    } 
+    }
     else if(strcmp(aptr->name, name) != 0){
         printw("\nYou don't have assignment named '%s'!\n", name);
         getch();
@@ -749,7 +749,7 @@ void Delete_Assign(STUDENT *login_st) {
 
 int New_Account() {
     char year[5], number[5], password[16];
-    
+
     clear();
     printw("Student Number : ");
     echo();
@@ -757,7 +757,7 @@ int New_Account() {
     printw("Password : ");
     noecho();
     scanw("%s",password);
-        
+
     if(search_year(year) != TOP->Year_Size){
         if(search_num(number, search_year(year)) != NULL){
             return NEW_ACCOUNT_FAIL;
@@ -773,7 +773,7 @@ int Delete_Account() {
     STUDENT *account;
 
     char year[5], number[5], password[16];
-    
+
     clear();
     printw("Student Number : ");
     echo();
@@ -788,7 +788,7 @@ int Delete_Account() {
     if(account == NULL){
         return DELETE_ACCOUNT_FAIL_INVALID;
     }
-    
+
     if(strcmp(account->password, password) != 0){
         return DELETE_ACCOUNT_FAIL_PASSWORD;
     }
@@ -802,13 +802,23 @@ int Delete_Account() {
         }
         sptr = sptr->link;
     }
-    
+
     sptr->link = account->link;
     free_student(account);
-    
+
     TOP->ST_YEAR[account_year].Num_Size--;
 
     return DELETE_ACCOUNT_SUCCESS;
+}
+
+void free_struct () {
+    for(int i = 0; i < TOP->Year_Size; i++){
+        free_student(TOP->ST_YEAR[i].ST_NUM);
+    }
+    if(TOP->Year_Size != 0){
+        free(TOP->ST_YEAR);
+    }
+    free(TOP);
 }
 
 void free_student (STUDENT *account) {
@@ -851,7 +861,7 @@ int Change_Password(STUDENT *login_st) {
 
     if(strcmp(password, confirm_password) == 0){
         strcpy(login_st->password, password);
-        
+
         return CHANGE_PASSWORD_SUCCESS;
     }
     else{
@@ -865,7 +875,7 @@ int login() {
     char year[5] = {};
     char number[5] = {};
     char password[16] = {};
-    
+
     clear();
     printw("Student Number : ");
     echo();
@@ -881,11 +891,11 @@ int login() {
     }
 
     login_st = search_num(number, Login_Year);
-    
+
     if(login_st == NULL){
         return LOGIN_FAILED;
     }
-    
+
     if(strcmp(login_st->password, password) == 0){
         strcpy(Curr_Num, year);
         strcat(Curr_Num, number);
@@ -908,7 +918,7 @@ void Temp_Password(){
 
     printw("Student Number : ");
     scanw("%4s%4s",year, number);
-        
+
     current_yr = search_year(year);
     current_st = search_num(number, current_yr);
 
