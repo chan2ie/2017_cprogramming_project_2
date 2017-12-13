@@ -556,7 +556,7 @@ int run_assign_menu (STUDENT *login_st){
 
     printw("<Assignment Management for %s>\n\n",Curr_Num);
 
-//    Sort_Assign();
+    Sort_Assign(login_st);
     Print_Assign(login_st);
 
     printw("1. New Assignment\n");
@@ -586,15 +586,14 @@ int run_assign_menu (STUDENT *login_st){
 }
 
 void Print_Assign(STUDENT *login_st){
-    int k,D_day,thistime,thattime;
-    time_t t;
-    struct tm *today;
+    int differ;
+    time_t t, d;
+    struct tm d_day, *today;
 
     ASSIGN *aptr = login_st->Child_A;
 
     t = time(NULL);
     today = localtime(&t);
-    thistime = mktime(today);
 
     for(int i = 0; i < login_st->Assign_Size; i++){
         aptr = aptr->link;
@@ -603,7 +602,29 @@ void Print_Assign(STUDENT *login_st){
         printw("    Describe\t\t : %s\n", aptr->describe);
         printw("    Professor\t\t : %s\n", aptr->professor);
         printw("    Due : %d/%d\n", aptr->date[0], aptr->date[1]);
-        printw("    D-day\t\t : later,,,,\n\n");
+    
+        d_day.tm_year = today->tm_year;
+        d_day.tm_mon = aptr->date[0] - 1;
+        d_day.tm_mday = aptr->date[1];
+        d_day.tm_hour = today->tm_hour;
+        d_day.tm_min = today->tm_min;
+        d_day.tm_sec = today->tm_sec;
+        d_day.tm_isdst = 0;
+
+        d = mktime(&d_day);
+
+        differ = (int)(t - d);
+
+        if(differ > 0){
+            printw("    D-day over!!!\n\n");
+        }
+        else if(differ == 0){
+            printw("    D-day\t\t : TODAY!\n\n ");
+        }
+        else if(differ < 0){
+            printw("    D-day\t\t : %d\n\n", (int)(differ / 86400));
+        }
+
     }
   
     //TODO 
@@ -729,13 +750,48 @@ void Print_CGPA_Graph () {
 	*/
 }
 
-void Sort_Assign () {
+void Sort_Assign (STUDENT *login_st) {
+    ASSIGN *check, *check_bf, *bef, *af;
+
+
+    for(int i = 1; i < login_st->Assign_Size; i++){
+        check = login_st->Child_A->link;
+        check_bf = login_st->Child_A;
+
+        for(int j = 0; j < i; j++){
+            check = check->link;
+            check_bf = check_bf->link;
+        }
+        
+        for(int j = 0; j < i; j++){
+            bef = login_st->Child_A->link;
+
+            for(int k = 0; k < j; k++){
+                bef = bef->link;
+            }
+
+            if(j == 0){
+                if(100*check->date[0] + check->date[1] < 100*bef->date[0] + bef->date[1]){
+                    login_st->Child_A->link = check;
+                    check_bf->link = check->link;
+                    check->link = bef;
+                }
+            }
+            else ;
+
+            if(j == (i - 1)) ;
+            else{
+                if(100*check->date[0] + check->date[1] >= 100*bef->date[0] + bef->date[1]
+                        && 100*check->date[0] + check->date[1] < 100*bef->link->date[0] + bef->link->date[1]){
+                    af = bef->link;
+                    bef->link = check;
+                    check_bf->link = check->link;
+                    check->link = af;
+                }
+            }
+        }
+    }
   
-  /*
-  
-  	To do...
-  
-  */
 }
 
 void Add_Assign(STUDENT *login_st) {
@@ -795,12 +851,18 @@ void Delete_Assign(STUDENT *login_st) {
         printw("\nYou don't have assignment named '%s'!\n", name);
         getch();
         return ;
+    } 
+    else if(strcmp(aptr->name, name) != 0){
+        printw("\nYou don't have assignment named '%s'!\n", name);
+        getch();
+        return ;
     }
-    
-    before->link = aptr->link;
-    free(aptr);
+    else{
+        before->link = aptr->link;
+        free(aptr);
 
-    login_st->Assign_Size--;
+        login_st->Assign_Size--;
+    }
 }
 
 int New_Account() {
