@@ -399,15 +399,8 @@ void read_data (FILE * fpoint) {
             year_num = search_year(year);
             STUDENT *current_st = search_num(number, year_num);
 
-            ASSIGN *head_as = malloc(sizeof(ASSIGN));
-            current_st->Child_A = head_as;
-
-            CGPA *head_cg = malloc(sizeof(CGPA));
-            
-            current_st->Child_C = head_cg;
-
         if(a_size != 0){
-                ASSIGN *current_as = head_as;
+                ASSIGN *current_as = current_st->Child_A;
                 
             for(int i = 0; i < a_size; i++){
                 ASSIGN *new = malloc(sizeof(ASSIGN));
@@ -429,7 +422,7 @@ void read_data (FILE * fpoint) {
         }
         
         if(c_size != 0){
-            CGPA *current_cg = head_cg;
+            CGPA *current_cg = current_st->Child_C;
 
             for(int i = 0; i < c_size; i++){
                 CGPA *new = malloc(sizeof(CGPA));
@@ -448,6 +441,7 @@ void read_data (FILE * fpoint) {
 
 void create_student (char year[5], char number[5], char password[16], int a_size, int c_size) {
     int year_num;
+    STUDENT *new = malloc(sizeof(STUDENT));
     
     if(TOP->Year_Size == 0){
         YEAR *year_head = malloc(sizeof(YEAR));
@@ -458,10 +452,8 @@ void create_student (char year[5], char number[5], char password[16], int a_size
         strcpy(TOP->ST_YEAR[0].year,year);
         
         STUDENT *head = malloc(sizeof(STUDENT));
+        head->link = new;
         TOP->ST_YEAR[0].ST_NUM = head;
-        
-        STUDENT *new = malloc(sizeof(STUDENT));
-        TOP->ST_YEAR[0].ST_NUM->link = new;
         
         TOP->ST_YEAR[0].Num_Size = 1;
 
@@ -482,7 +474,6 @@ void create_student (char year[5], char number[5], char password[16], int a_size
             STUDENT *head = malloc(sizeof(STUDENT));
             TOP->ST_YEAR[year_num].ST_NUM = head;
     
-            STUDENT *new = malloc(sizeof(STUDENT));
             TOP->ST_YEAR[year_num].ST_NUM->link = new;
         
             TOP->ST_YEAR[year_num].Num_Size = 1;
@@ -494,7 +485,6 @@ void create_student (char year[5], char number[5], char password[16], int a_size
             
         }
         else{
-            STUDENT *new = malloc(sizeof(STUDENT));
             STUDENT *sptr = TOP->ST_YEAR[year_num].ST_NUM;
 
             for(int j = 0; j < TOP->ST_YEAR[year_num].Num_Size; j++){
@@ -509,9 +499,18 @@ void create_student (char year[5], char number[5], char password[16], int a_size
             strcpy(new->password, password);
             new->Assign_Size = a_size;
             new->CGPA_Size = c_size;
-        }
-        //DONE (for now : 1208)
+        }    
     }
+    ASSIGN *head_as = malloc(sizeof(ASSIGN));
+    new->Child_A = head_as;
+    head_as->link = NULL;
+
+    CGPA *head_cg = malloc(sizeof(CGPA));
+    new->Child_C = head_cg;
+    head_cg->link = NULL;
+
+    new->link = NULL;
+    //DONE (for now : 1208)
 }
 
 void create_assign 
@@ -521,11 +520,15 @@ void create_assign
     strcpy(new->professor, professor);
     new->date[0] = month;
     new->date[1] = date;
+
+    new->link = NULL;
 }
 
 void create_cgpa (CGPA *new, int semester, float score) {
     new->semester = semester;
     new->score = score;
+
+    new->link = NULL;
 }
 
 char Account_Manage(){
@@ -915,6 +918,7 @@ int Delete_Account() {
 
     for(int i = 0; i < TOP->ST_YEAR[account_year].Num_Size; i++){
         if( sptr->link == account ){
+            printw("this account\n");
             break;
         }
         sptr = sptr->link;
@@ -1030,7 +1034,14 @@ void Temp_Password(){
     current_st = search_num(number, current_yr);
 
     if(current_st == NULL){
-        printw("Failed to get temporary password. (Wrong student number)\n",current_st->password);
+        printw("Failed to get temporary password. (Wrong student number)\n");
+        getch();
+
+        return ;
+    }
+
+    if(current_st->Child_C->link == NULL){
+        printw("Failed to get temporary password. (No CGPA Information)\n");
         getch();
 
         return ;
