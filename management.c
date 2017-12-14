@@ -84,6 +84,7 @@ int main(){
     endwin();
     Save_Data();
     system("clear");
+    free_struct();
 
     return 0;
 }
@@ -516,7 +517,6 @@ void Print_Assign(STUDENT *login_st){
 
     }
 
-    //TODO
 }
 
 char cgpa_menu() {
@@ -580,6 +580,7 @@ void Add_GPA (STUDENT *login_st) {
 
     new->semester = semester - '0';
     new->score = gpa;
+    new->link = NULL;
 
     printw("GPA has added successfully!\n");
     getch();
@@ -655,6 +656,9 @@ void Sort_Assign (STUDENT *login_st) {
                     login_st->Child_A->link = check;
                     check_bf->link = check->link;
                     check->link = bef;
+
+                    j = i;
+                    break;
                 }
             }
             else ;
@@ -669,6 +673,9 @@ void Sort_Assign (STUDENT *login_st) {
                     bef->link = check;
                     check_bf->link = check->link;
                     check->link = af;
+
+                    j = i;
+                    break;
                 }
             }
         }
@@ -813,12 +820,22 @@ int Delete_Account() {
 
 void free_struct () {
     for(int i = 0; i < TOP->Year_Size; i++){
-        free_student(TOP->ST_YEAR[i].ST_NUM);
+        free_year(TOP->ST_YEAR[i].ST_NUM->link);
+        free(TOP->ST_YEAR[i].ST_NUM);
     }
     if(TOP->Year_Size != 0){
         free(TOP->ST_YEAR);
     }
     free(TOP);
+}
+
+void free_year (STUDENT* sptr) {
+    
+    if(sptr->link != NULL){
+        free_year(sptr->link);
+    }
+    free_student(sptr);
+    free(sptr);
 }
 
 void free_student (STUDENT *account) {
