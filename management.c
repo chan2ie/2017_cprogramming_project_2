@@ -804,7 +804,6 @@ int Delete_Account() {
 
     for(int i = 0; i < TOP->ST_YEAR[account_year].Num_Size; i++){
         if( sptr->link == account ){
-            printw("this account\n");
             break;
         }
         sptr = sptr->link;
@@ -820,7 +819,9 @@ int Delete_Account() {
 
 void free_struct () {
     for(int i = 0; i < TOP->Year_Size; i++){
-        free_year(TOP->ST_YEAR[i].ST_NUM->link);
+        if(TOP->ST_YEAR[i].Num_Size != 0 ){
+            free_year(TOP->ST_YEAR[i].ST_NUM->link);
+        }
         free(TOP->ST_YEAR[i].ST_NUM);
     }
     if(TOP->Year_Size != 0){
